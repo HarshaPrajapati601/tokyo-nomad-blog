@@ -1,64 +1,76 @@
-import Image from "next/image";
+import { client } from '@/lib/sanity';
+import { urlFor } from '@/lib/imageBuilder';
+import Link from 'next/link';
 
-export default function Home() {
+async function getPosts() {
+  const query = `*[_type == "post"] | order(_createdAt desc) {
+    title,
+    slug,
+    mainImage,
+    category,
+    "excerpt": array::join(string::split(pt::text(body), "")[0..150], "") + "..."
+  }`;
+  return await client.fetch(query);
+}
+
+export default async function Home() {
+  const posts = await getPosts();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="bg-stone-50 min-h-screen">
+      {/* Red Header Bar */}
+
+      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 p-10">
+        
+        {/* LEFT: Automatic Post Grid (8 Columns) */}
+        <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          {posts.map((post: any) => (
+            <Link href={`/posts/${post.slug.current}`} key={post.slug.current}>
+              <div className="bg-white group cursor-pointer shadow-sm hover:shadow-md transition">
+                <div className="relative h-64 overflow-hidden">
+                  <img 
+                    src={urlFor(post.mainImage).width(600).url()} 
+                    alt={post.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+                  />
+                </div>
+                <div className="p-6">
+                  <span className="text-red-700 font-bold text-xs uppercase tracking-widest">
+                    {post.category}
+                  </span>
+                  <h2 className="text-xl font-serif font-bold mt-2 group-hover:text-red-700 transition">
+                    {post.title}
+                  </h2>
+                  <p className="text-stone-500 text-sm mt-3 line-clamp-3">
+                    {post.excerpt}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* RIGHT: Sidebar (4 Columns) */}
+        <aside className="lg:col-span-4">
+          <div className="bg-white p-8 border border-stone-200 sticky top-10 text-center">
+            {/* Using your selfie from Owakudani */}
+            <img 
+              src="/harsha-profile.jpg" 
+              alt="Harsha" 
+              className="w-32 h-32 rounded-full mx-auto mb-4 border-2 border-red-700 object-cover" 
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            <h3 className="text-xl font-serif font-bold">Namaste! I'm Harsha</h3>
+            <p className="text-stone-600 text-sm mt-4 leading-relaxed">
+              An Indian vegetarian expat living in Kanagawa. 
+              I share solo travel guides and vlogs to help you explore Japan with ease.
+            </p>
+            <div className="mt-6 pt-6 border-t border-stone-100 flex flex-col space-y-2">
+               <span className="text-xs font-bold uppercase text-red-700">Follow the Vlogs</span>
+               <a href="#" className="text-stone-800 font-bold hover:text-red-700">YouTube</a>
+               <a href="#" className="text-stone-800 font-bold hover:text-red-700">Instagram</a>
+            </div>
+          </div>
+        </aside>
       </main>
     </div>
   );
